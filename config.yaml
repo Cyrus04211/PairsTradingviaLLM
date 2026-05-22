@@ -1,0 +1,54 @@
+universe:
+  min_market_cap_usd: 5_000_000_000
+  sec_tickers_url: "https://www.sec.gov/files/company_tickers.json"
+
+industry:
+  futu_host: "127.0.0.1"
+  futu_port: 11111
+  rate_limit_sleep: 5.0
+
+embedding:
+  api_key_env: "CLOSEAI_API_KEY"
+  api_url: "https://api.openai-proxy.org/v1/embeddings"
+  model: "text-embedding-3-large"
+  batch_size: 128
+  summary_model: "gpt-4o"
+  summary_api_url: "https://api.openai-proxy.org/v1/chat/completions"
+
+text_similarity:
+  weights:
+    core_business: 0.30
+    main_product_service: 0.30
+    customer_channel: 0.25
+    geography: 0.15
+  min_overlap_score: 0.7
+
+return_correlation:
+  neutralization_window: 120
+  correlation_windows: [252, 504, 1000]
+  min_correlation: 0.3
+  price_history_days: 1200
+
+candidate_selection:
+  candidate_fraction: 0.50
+  company_appearance_cap: 2
+  text_weight: 0.5
+  correlation_weight: 0.5
+
+llm_review:
+  api_key_env: "CLOSEAI_API_KEY"
+  api_url: "https://api.openai-proxy.org/v1/chat/completions"
+  model: "gpt-4o"
+  workers: 10
+  dimension_workers: 4
+  reasoning_effort: "high"
+  max_retries: 3
+  request_timeout: 300
+
+weight_optimization:
+  lookback_days: 60
+  lambda_industry: 1.0
+  lambda_volatility: 1.0
+  lambda_size: 1.0
+  x_min: 0.2
+  x_max: 0.8

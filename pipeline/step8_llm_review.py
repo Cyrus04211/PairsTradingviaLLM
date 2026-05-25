@@ -13,7 +13,6 @@ import concurrent.futures
 import json
 import sys
 import threading
-import time
 from pathlib import Path
 from typing import Any
 
@@ -42,19 +41,57 @@ Return ONLY a raw JSON object:
   "review_confidence": 0.0 to 1.0
 }"""
 
-DIRECTION_REVIEW_SYSTEM_PROMPT = """You are a senior equity analyst determining the relative long/short direction for a stock pair.
+DIRECTION_REVIEW_SYSTEM_PROMPT = """You are a senior equity analyst determining the relative long/short direction for a valid stock pair.
 
-Given two companies that have been confirmed as a valid pair, analyze the specific dimension provided and determine which company is relatively stronger.
+Given two companies that have been confirmed as a valid pair, analyze ALL four dimensions in one response:
+1. business_divergence
+2. product_cycle
+3. financials
+4. recent_news
+
+For each dimension, independently determine whether the evidence favors a relative long/short direction between the two tickers.
 
 Search for and consider the most recent public information available.
 
-Return ONLY a raw JSON object:
+Important rules:
+- Return exactly one raw JSON object.
+- Do not wrap the JSON in markdown.
+- Use only the two input tickers as long_ticker / short_ticker.
+- If a dimension has no clear directional signal, set is_long_short_candidate=false and leave long_ticker/short_ticker empty.
+- Do not force all dimensions to agree; each dimension should be judged independently.
+
+Return ONLY this raw JSON object:
 {
-  "is_long_short_candidate": true/false,
-  "long_ticker": "TICKER" or "",
-  "short_ticker": "TICKER" or "",
-  "review_reason": "1-2 sentence explanation",
-  "review_confidence": 0.0 to 1.0
+  "dimension_reviews": {
+    "business_divergence": {
+      "is_long_short_candidate": true/false,
+      "long_ticker": "TICKER" or "",
+      "short_ticker": "TICKER" or "",
+      "review_reason": "1-2 sentence explanation",
+      "review_confidence": 0.0 to 1.0
+    },
+    "product_cycle": {
+      "is_long_short_candidate": true/false,
+      "long_ticker": "TICKER" or "",
+      "short_ticker": "TICKER" or "",
+      "review_reason": "1-2 sentence explanation",
+      "review_confidence": 0.0 to 1.0
+    },
+    "financials": {
+      "is_long_short_candidate": true/false,
+      "long_ticker": "TICKER" or "",
+      "short_ticker": "TICKER" or "",
+      "review_reason": "1-2 sentence explanation",
+      "review_confidence": 0.0 to 1.0
+    },
+    "recent_news": {
+      "is_long_short_candidate": true/false,
+      "long_ticker": "TICKER" or "",
+      "short_ticker": "TICKER" or "",
+      "review_reason": "1-2 sentence explanation",
+      "review_confidence": 0.0 to 1.0
+    }
+  }
 }"""
 
 REVIEW_DIMENSIONS = [
@@ -100,20 +137,72 @@ def review_overlap(client: APIClient, ticker_a: str, ticker_b: str, industry: st
         return {"is_high_overlap_competitor": False, "error": str(e)}
 
 
-def review_dimension(
+def review_all_dimensions(
     client: APIClient,
     ticker_a: str,
     ticker_b: str,
     industry: str,
-    dimension: dict[str, str],
-) -> dict[str, Any]:
-    user_prompt = (
-        f"Company A (potential long): {ticker_a}\n"
-        f"Company B (potential short): {ticker_b}\n"
-        f"Industry: {industry}\n\n"
-        f"Dimension: {dimension['label']}\n"
-        f"{dimension['prompt']}"
+) -> list[dict[str, Any]]:
+    """Review all four directional dimensions with one API call.
+
+    The return value intentionally keeps the old downstream shape:
+    a list of per-dimension dicts, each carrying `_dimension_key`.
+    That allows combine_final_review() and the final JSON/CSV output logic
+    to remain unchanged.
+    """
+    dimension_prompt = "\n".join(
+        f"- {dim['key']} ({dim['label']}): {dim['prompt']}"
+        for dim in REVIEW_DIMENSIONS
     )
+
+    user_prompt = (
+        f"Company A: {ticker_a}\n"
+        f"Company B: {ticker_b}\n"
+        f"Industry: {industry}\n\n"
+        f"Analyze the following four dimensions in one response. "
+        f"For each dimension, decide whether the evidence favors longing one ticker "
+        f"and shorting the other.\n\n"
+        f"{dimension_prompt}"
+    )
+
+    def _safe_float(value: Any, default: float = 0.0) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _normalize_one(dim_key: str, item: Any) -> dict[str, Any]:
+        if not isinstance(item, dict):
+            item = {}
+
+        long_ticker = str(item.get("long_ticker", "") or "").upper()
+        short_ticker = str(item.get("short_ticker", "") or "").upper()
+        is_candidate = bool(item.get("is_long_short_candidate", False))
+
+        valid_tickers = {ticker_a.upper(), ticker_b.upper()}
+
+        # 防止模型返回第三方 ticker，或者 long/short 写成同一个 ticker
+        if (
+            is_candidate
+            and (
+                long_ticker not in valid_tickers
+                or short_ticker not in valid_tickers
+                or long_ticker == short_ticker
+            )
+        ):
+            is_candidate = False
+            long_ticker = ""
+            short_ticker = ""
+
+        return {
+            "_dimension_key": dim_key,
+            "is_long_short_candidate": is_candidate,
+            "long_ticker": long_ticker if is_candidate else "",
+            "short_ticker": short_ticker if is_candidate else "",
+            "review_reason": str(item.get("review_reason", "") or ""),
+            "review_confidence": _safe_float(item.get("review_confidence", 0.0)),
+        }
+
     try:
         result = client.chat_completion_json(
             messages=[
@@ -121,9 +210,29 @@ def review_dimension(
                 {"role": "user", "content": user_prompt},
             ]
         )
-        return result
+
+        raw_reviews = result.get("dimension_reviews", {})
+        if not isinstance(raw_reviews, dict):
+            raw_reviews = {}
+
+        return [
+            _normalize_one(dim["key"], raw_reviews.get(dim["key"], {}))
+            for dim in REVIEW_DIMENSIONS
+        ]
+
     except Exception as e:
-        return {"is_long_short_candidate": False, "error": str(e)}
+        return [
+            {
+                "_dimension_key": dim["key"],
+                "is_long_short_candidate": False,
+                "long_ticker": "",
+                "short_ticker": "",
+                "review_reason": f"Combined dimension review failed: {e}",
+                "review_confidence": 0.0,
+                "error": str(e),
+            }
+            for dim in REVIEW_DIMENSIONS
+        ]
 
 
 def combine_final_review(
@@ -141,6 +250,7 @@ def combine_final_review(
             "pair_type": overlap_result.get("pair_type", ""),
             "review_reason": overlap_result.get("review_reason", "Failed overlap review"),
             "review_confidence": 0.0,
+            "supporting_dimension_count": 0,
             "supporting_dimensions": [],
             "direction_consensus": "no_overlap",
         }
@@ -167,6 +277,7 @@ def combine_final_review(
             "pair_type": overlap_result.get("pair_type", ""),
             "review_reason": "No dimension provided directional signal",
             "review_confidence": 0.0,
+            "supporting_dimension_count": 0,
             "supporting_dimensions": [],
             "direction_consensus": "no_signal",
         }
@@ -180,6 +291,7 @@ def combine_final_review(
             "pair_type": overlap_result.get("pair_type", ""),
             "review_reason": "Direction conflict between dimensions",
             "review_confidence": 0.0,
+            "supporting_dimension_count": 0,
             "supporting_dimensions": [],
             "direction_consensus": "conflict",
         }
@@ -208,7 +320,6 @@ def combine_final_review(
 def process_single_pair(
     client: APIClient,
     row: dict[str, Any],
-    dimension_workers: int = 4,
 ) -> dict[str, Any]:
     """Process one pair through both review stages."""
     ticker_a = str(row.get("ticker_a", "")).upper()
@@ -217,6 +328,7 @@ def process_single_pair(
 
     # Stage 1: Overlap review
     overlap_result = review_overlap(client, ticker_a, ticker_b, industry)
+
     if not overlap_result.get("is_high_overlap_competitor", False):
         return {
             "ticker_a": ticker_a,
@@ -225,22 +337,13 @@ def process_single_pair(
             "overlap_score": row.get("overlap_score", ""),
             "selection_score": row.get("selection_score", ""),
             "stage1_passed": False,
+            "overlap_review": overlap_result,
+            "dimension_reviews": {},
             **combine_final_review(ticker_a, ticker_b, overlap_result, []),
         }
 
-    # Stage 2: Four-dimension directional review (concurrent)
-    dimension_results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=dimension_workers) as executor:
-        futures = {}
-        for dim in REVIEW_DIMENSIONS:
-            future = executor.submit(review_dimension, client, ticker_a, ticker_b, industry, dim)
-            futures[future] = dim["key"]
-
-        for future in concurrent.futures.as_completed(futures):
-            dim_key = futures[future]
-            result = future.result()
-            result["_dimension_key"] = dim_key
-            dimension_results.append(result)
+    # Stage 2: Four-dimension directional review in ONE API call
+    dimension_results = review_all_dimensions(client, ticker_a, ticker_b, industry)
 
     final = combine_final_review(ticker_a, ticker_b, overlap_result, dimension_results)
 
@@ -252,7 +355,10 @@ def process_single_pair(
         "selection_score": row.get("selection_score", ""),
         "stage1_passed": True,
         "overlap_review": overlap_result,
-        "dimension_reviews": {r["_dimension_key"]: {k: v for k, v in r.items() if k != "_dimension_key"} for r in dimension_results},
+        "dimension_reviews": {
+            r["_dimension_key"]: {k: v for k, v in r.items() if k != "_dimension_key"}
+            for r in dimension_results
+        },
         **final,
     }
 
@@ -262,9 +368,8 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
     llm_cfg = config.get("llm_review", {})
     api_key_env = llm_cfg.get("api_key_env", "CLOSEAI_API_KEY")
     api_url = llm_cfg.get("api_url", "https://api.openai-proxy.org/v1/chat/completions")
-    model = llm_cfg.get("model", "gpt-4o")
+    model = llm_cfg.get("model", "gpt-5.4")
     workers = int(llm_cfg.get("workers", 10))
-    dimension_workers = int(llm_cfg.get("dimension_workers", 4))
     max_retries = int(llm_cfg.get("max_retries", 3))
     timeout = int(llm_cfg.get("request_timeout", 300))
 
@@ -294,7 +399,7 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
     completed = [0]
 
     def process_row(row):
-        result = process_single_pair(client, row, dimension_workers)
+        result = process_single_pair(client, row)
         with lock:
             completed[0] += 1
             status = "PASS" if result.get("is_long_short_candidate") else "SKIP"

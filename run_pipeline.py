@@ -18,9 +18,9 @@ STEPS = {
     1: ("Universe Construction", "pipeline.step1_universe"),
     2: ("Industry Classification", "pipeline.step2_industry"),
     3: ("Intra-Industry Pairing", "pipeline.step3_pairing"),
-    4: ("Text Embedding", "pipeline.step4_text_embedding"),
-    5: ("Text Similarity Filtering", "pipeline.step5_text_similarity"),
-    6: ("Return Neutralization & Correlation", "pipeline.step6_return_correlation"),
+    4: ("Neutralized Return Correlation Filter", "pipeline.step4_curve_filter"),
+    5: ("Text Embedding", "pipeline.step5_text_embedding"),
+    6: ("Text Similarity Filtering", "pipeline.step6_text_similarity"),
     7: ("Candidate Selection & Concentration Control", "pipeline.step7_candidate_selection"),
     8: ("LLM Subjective Review", "pipeline.step8_llm_review"),
     9: ("Weight Optimization", "pipeline.step9_weight_optimization"),
@@ -50,11 +50,11 @@ Pipeline Steps:
   1. Universe Construction     - Fetch US stocks, filter by market cap (>$5B)
   2. Industry Classification   - Assign Futu industry plates
   3. Intra-Industry Pairing    - Generate all pairs within each industry
-  4. Text Embedding            - Extract SEC 10-K, refine to 4 dimensions, embed
-  5. Text Similarity           - Compute weighted cosine similarity, filter
-  6. Return Correlation        - Neutralize returns, compute multi-window correlation
-  7. Candidate Selection       - Score, rank, apply concentration control (max 2 per company)
-  8. LLM Review                - Two-stage subjective analysis (overlap + direction)
+  4. Return Correlation        - Keep pairs that rank in the top 50% for 252/504/1000 neutralized-correlation windows
+  5. Text Embedding            - Summarize only surviving companies and embed
+  6. Text Similarity           - Compute weighted cosine similarity, keep top 30%
+  7. Candidate Selection       - Enforce concentration control (max 2 per company)
+  8. LLM Review                - Two-stage subjective analysis (max 2 calls per pair)
   9. Weight Optimization       - Closed-form risk-neutral weight calculation
 
 Examples:

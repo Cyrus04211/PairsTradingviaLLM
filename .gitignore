@@ -1,5 +1,6 @@
 outputs/
 !outputs/.gitkeep
+outputs_*/
 __pycache__/
 *.pyc
 *.pyo
@@ -7,6 +8,9 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+cache/
 .venv/
 venv/
 *.npz
+*.parquet
+.DS_Store

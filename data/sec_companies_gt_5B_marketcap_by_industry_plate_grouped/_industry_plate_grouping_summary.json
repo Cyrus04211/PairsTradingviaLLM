@@ -1,0 +1,533 @@
+{
+  "Aerospace & Defense": {
+    "company_count": 33,
+    "source_industry_plates": {
+      "Aerospace & Defense": 33
+    }
+  },
+  "Agricultural Inputs & Farm Products": {
+    "company_count": 8,
+    "source_industry_plates": {
+      "Agricultural Inputs": 5,
+      "Farm Products": 3
+    }
+  },
+  "Airlines & Airports": {
+    "company_count": 10,
+    "source_industry_plates": {
+      "Airlines": 6,
+      "Airports & Air Services": 4
+    }
+  },
+  "Apparel, Footwear & Luxury Goods": {
+    "company_count": 18,
+    "source_industry_plates": {
+      "Apparel Manufacturing": 5,
+      "Apparel Retail": 7,
+      "Footwear & Accessories": 5,
+      "Luxury Goods": 1
+    }
+  },
+  "Asset Management": {
+    "company_count": 30,
+    "source_industry_plates": {
+      "Asset Management": 30
+    }
+  },
+  "Auto & Truck Dealerships": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Auto & Truck Dealerships": 6
+    }
+  },
+  "Auto Manufacturers": {
+    "company_count": 12,
+    "source_industry_plates": {
+      "Auto Manufacturers": 12
+    }
+  },
+  "Auto Parts": {
+    "company_count": 12,
+    "source_industry_plates": {
+      "Auto Parts": 12
+    }
+  },
+  "Banks - Diversified": {
+    "company_count": 18,
+    "source_industry_plates": {
+      "Banks - Diversified": 18
+    }
+  },
+  "Banks - Regional": {
+    "company_count": 57,
+    "source_industry_plates": {
+      "Banks - Regional": 57
+    }
+  },
+  "Base Metals & Mining": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Aluminum": 2,
+      "Copper": 3,
+      "Other Industrial Metals & Mining": 8,
+      "Uranium": 4
+    }
+  },
+  "Beverages & Tobacco": {
+    "company_count": 18,
+    "source_industry_plates": {
+      "Beverages - Brewers": 5,
+      "Beverages - Non-Alcoholic": 9,
+      "Beverages - Wineries & Distilleries": 1,
+      "Tobacco": 3
+    }
+  },
+  "Biotechnology": {
+    "company_count": 54,
+    "source_industry_plates": {
+      "Biotechnology": 54
+    }
+  },
+  "Broadline & Department Retail": {
+    "company_count": 9,
+    "source_industry_plates": {
+      "Department Stores": 2,
+      "Discount Stores": 7
+    }
+  },
+  "Building Materials & Wood Products": {
+    "company_count": 11,
+    "source_industry_plates": {
+      "Building Materials": 8,
+      "Lumber & Wood Production": 3
+    }
+  },
+  "Building Products, Equipment & Security": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Building Products & Equipment": 14,
+      "Security & Protection Services": 3
+    }
+  },
+  "Capital Markets & Diversified Financials": {
+    "company_count": 32,
+    "source_industry_plates": {
+      "Capital Markets": 28,
+      "Financial Conglomerates": 3,
+      "Shell Companies": 1
+    }
+  },
+  "Chemicals": {
+    "company_count": 21,
+    "source_industry_plates": {
+      "Chemicals": 2,
+      "Specialty Chemicals": 19
+    }
+  },
+  "Commercial & Specialized REITs": {
+    "company_count": 37,
+    "source_industry_plates": {
+      "REIT - Diversified": 2,
+      "REIT - Industrial": 10,
+      "REIT - Office": 3,
+      "REIT - Retail": 11,
+      "REIT - Specialty": 11
+    }
+  },
+  "Communication Equipment": {
+    "company_count": 15,
+    "source_industry_plates": {
+      "Communication Equipment": 15
+    }
+  },
+  "Computer Hardware & Consumer Electronics": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Computer Hardware": 11,
+      "Consumer Electronics": 3,
+      "Electronics & Computer Distribution": 3
+    }
+  },
+  "Credit Services": {
+    "company_count": 13,
+    "source_industry_plates": {
+      "Credit Services": 13
+    }
+  },
+  "Diagnostics & Research": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Diagnostics & Research": 17
+    }
+  },
+  "Drug Manufacturers": {
+    "company_count": 28,
+    "source_industry_plates": {
+      "Drug Manufacturers - General": 15,
+      "Drug Manufacturers - Specialty & Generic": 13
+    }
+  },
+  "Electrical Equipment & Parts": {
+    "company_count": 9,
+    "source_industry_plates": {
+      "Electrical Equipment & Parts": 9
+    }
+  },
+  "Electronic Components": {
+    "company_count": 13,
+    "source_industry_plates": {
+      "Electronic Components": 13
+    }
+  },
+  "Engineering & Construction": {
+    "company_count": 23,
+    "source_industry_plates": {
+      "Engineering & Construction": 23
+    }
+  },
+  "Entertainment & Gaming": {
+    "company_count": 19,
+    "source_industry_plates": {
+      "Electronic Gaming & Multimedia": 4,
+      "Entertainment": 15
+    }
+  },
+  "Farm & Heavy Construction Machinery": {
+    "company_count": 7,
+    "source_industry_plates": {
+      "Farm & Heavy Construction Machinery": 7
+    }
+  },
+  "Financial Data & Stock Exchanges": {
+    "company_count": 11,
+    "source_industry_plates": {
+      "Financial Data & Stock Exchanges": 11
+    }
+  },
+  "Gold & Precious Metals": {
+    "company_count": 27,
+    "source_industry_plates": {
+      "Gold": 22,
+      "Other Precious Metals & Mining": 4,
+      "Silver": 1
+    }
+  },
+  "Grocery & Food Distribution": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Food Distribution": 3,
+      "Grocery Stores": 3
+    }
+  },
+  "Healthcare Plans": {
+    "company_count": 7,
+    "source_industry_plates": {
+      "Healthcare Plans": 7
+    }
+  },
+  "Healthcare Providers, Distribution & HCIT": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Health Information Services": 4,
+      "Medical Care Facilities": 9,
+      "Medical Distribution": 4
+    }
+  },
+  "Home Improvement & Furnishings": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Furnishings, Fixtures & Appliances": 3,
+      "Home Improvement Retail": 3
+    }
+  },
+  "Household & Personal Products": {
+    "company_count": 8,
+    "source_industry_plates": {
+      "Household & Personal Products": 8
+    }
+  },
+  "Independent Power & Renewable Utilities": {
+    "company_count": 14,
+    "source_industry_plates": {
+      "Solar": 2,
+      "Utilities - Independent Power Producers": 5,
+      "Utilities - Renewable": 7
+    }
+  },
+  "Industrial Distribution": {
+    "company_count": 12,
+    "source_industry_plates": {
+      "Industrial Distribution": 12
+    }
+  },
+  "Information Technology Services": {
+    "company_count": 22,
+    "source_industry_plates": {
+      "Information Technology Services": 22
+    }
+  },
+  "Insurance Brokers": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Insurance Brokers": 6
+    }
+  },
+  "Internet Media & Advertising": {
+    "company_count": 17,
+    "source_industry_plates": {
+      "Advertising Agencies": 4,
+      "Internet Content & Information": 13
+    }
+  },
+  "Internet Retail": {
+    "company_count": 15,
+    "source_industry_plates": {
+      "Internet Retail": 15
+    }
+  },
+  "Leisure, Recreation & Personal Services": {
+    "company_count": 8,
+    "source_industry_plates": {
+      "Leisure": 5,
+      "Personal Services": 2,
+      "Recreational Vehicles": 1
+    }
+  },
+  "Life & Diversified Insurance": {
+    "company_count": 16,
+    "source_industry_plates": {
+      "Insurance - Diversified": 6,
+      "Insurance - Life": 10
+    }
+  },
+  "Media, Publishing & Education": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Broadcasting": 1,
+      "Education & Training Services": 3,
+      "Publishing": 2
+    }
+  },
+  "Medical Devices, Instruments & Supplies": {
+    "company_count": 34,
+    "source_industry_plates": {
+      "Medical Devices": 18,
+      "Medical Instruments & Supplies": 16
+    }
+  },
+  "Mortgage REITs & Finance": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Mortgage Finance": 2,
+      "REIT - Mortgage": 4
+    }
+  },
+  "Oil & Gas E&P": {
+    "company_count": 25,
+    "source_industry_plates": {
+      "Oil & Gas E&P": 25
+    }
+  },
+  "Oil & Gas Equipment, Services & Drilling": {
+    "company_count": 13,
+    "source_industry_plates": {
+      "Oil & Gas Drilling": 2,
+      "Oil & Gas Equipment & Services": 11
+    }
+  },
+  "Oil & Gas Integrated": {
+    "company_count": 14,
+    "source_industry_plates": {
+      "Oil & Gas Integrated": 14
+    }
+  },
+  "Oil & Gas Midstream": {
+    "company_count": 24,
+    "source_industry_plates": {
+      "Oil & Gas Midstream": 24
+    }
+  },
+  "Oil & Gas Refining & Marketing": {
+    "company_count": 7,
+    "source_industry_plates": {
+      "Oil & Gas Refining & Marketing": 7
+    }
+  },
+  "Packaged Foods & Confectioners": {
+    "company_count": 16,
+    "source_industry_plates": {
+      "Confectioners": 2,
+      "Packaged Foods": 14
+    }
+  },
+  "Packaging & Paper": {
+    "company_count": 9,
+    "source_industry_plates": {
+      "Packaging & Containers": 8,
+      "Paper & Paper Products": 1
+    }
+  },
+  "Professional & Business Services": {
+    "company_count": 15,
+    "source_industry_plates": {
+      "Consulting Services": 4,
+      "Specialty Business Services": 11
+    }
+  },
+  "Property & Casualty Insurance": {
+    "company_count": 21,
+    "source_industry_plates": {
+      "Insurance - Property & Casualty": 18,
+      "Insurance - Reinsurance": 3
+    }
+  },
+  "Railroads": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Railroads": 6
+    }
+  },
+  "Real Estate Services": {
+    "company_count": 8,
+    "source_industry_plates": {
+      "Real Estate Services": 8
+    }
+  },
+  "Rental & Leasing Services": {
+    "company_count": 10,
+    "source_industry_plates": {
+      "Rental & Leasing Services": 10
+    }
+  },
+  "Residential & Healthcare REITs": {
+    "company_count": 18,
+    "source_industry_plates": {
+      "REIT - Healthcare Facilities": 7,
+      "REIT - Residential": 11
+    }
+  },
+  "Residential Construction": {
+    "company_count": 7,
+    "source_industry_plates": {
+      "Residential Construction": 7
+    }
+  },
+  "Resorts, Casinos & Gambling": {
+    "company_count": 11,
+    "source_industry_plates": {
+      "Gambling": 5,
+      "Resorts & Casinos": 6
+    }
+  },
+  "Restaurants": {
+    "company_count": 13,
+    "source_industry_plates": {
+      "Restaurants": 13
+    }
+  },
+  "Scientific & Technical Instruments": {
+    "company_count": 11,
+    "source_industry_plates": {
+      "Scientific & Technical Instruments": 11
+    }
+  },
+  "Semiconductor Equipment & Materials": {
+    "company_count": 14,
+    "source_industry_plates": {
+      "Semiconductor Equipment & Materials": 14
+    }
+  },
+  "Semiconductors": {
+    "company_count": 32,
+    "source_industry_plates": {
+      "Semiconductors": 32
+    }
+  },
+  "Software - Application": {
+    "company_count": 51,
+    "source_industry_plates": {
+      "Software - Application": 51
+    }
+  },
+  "Software - Infrastructure": {
+    "company_count": 38,
+    "source_industry_plates": {
+      "Software - Infrastructure": 38
+    }
+  },
+  "Specialty Industrial Machinery & Conglomerates": {
+    "company_count": 35,
+    "source_industry_plates": {
+      "Conglomerates": 5,
+      "Specialty Industrial Machinery": 30
+    }
+  },
+  "Specialty Insurance": {
+    "company_count": 7,
+    "source_industry_plates": {
+      "Insurance - Specialty": 7
+    }
+  },
+  "Specialty Retail": {
+    "company_count": 9,
+    "source_industry_plates": {
+      "Specialty Retail": 9
+    }
+  },
+  "Steel & Metal Fabrication": {
+    "company_count": 12,
+    "source_industry_plates": {
+      "Metal Fabrication": 5,
+      "Steel": 7
+    }
+  },
+  "Telecom Services": {
+    "company_count": 24,
+    "source_industry_plates": {
+      "Telecom Services": 24
+    }
+  },
+  "Tools & Accessories": {
+    "company_count": 6,
+    "source_industry_plates": {
+      "Tools & Accessories": 6
+    }
+  },
+  "Travel, Lodging & Hotel REITs": {
+    "company_count": 19,
+    "source_industry_plates": {
+      "Lodging": 8,
+      "REIT - Hotel & Motel": 2,
+      "Travel Services": 9
+    }
+  },
+  "Trucking, Freight & Logistics": {
+    "company_count": 16,
+    "source_industry_plates": {
+      "Integrated Freight & Logistics": 8,
+      "Marine Shipping": 2,
+      "Trucking": 6
+    }
+  },
+  "Utilities - Regulated Electric": {
+    "company_count": 33,
+    "source_industry_plates": {
+      "Utilities - Regulated Electric": 33
+    }
+  },
+  "Utilities - Regulated Gas, Water & Diversified": {
+    "company_count": 15,
+    "source_industry_plates": {
+      "Utilities - Diversified": 3,
+      "Utilities - Regulated Gas": 9,
+      "Utilities - Regulated Water": 3
+    }
+  },
+  "Waste Management & Pollution Control": {
+    "company_count": 9,
+    "source_industry_plates": {
+      "Pollution & Treatment Controls": 3,
+      "Waste Management": 6
+    }
+  }
+}

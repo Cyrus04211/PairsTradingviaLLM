@@ -1,4 +1,4 @@
-"""Step 2: Assign industry classification using Futu OpenAPI.
+"""Step 2: Assign industry classification using preloaded data or Futu OpenAPI.
 
 Requires FutuOpenD gateway running locally.
 Outputs: outputs/universe_with_industry.csv
@@ -79,6 +79,19 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
         raise FileNotFoundError(f"Universe file not found: {universe_path}. Run step1 first.")
 
     df = pd.read_csv(universe_path)
+    total = len(df)
+    if "industry_plate" in df.columns:
+        df["industry_plate"] = df["industry_plate"].fillna("").astype(str).str.strip()
+        matched = int((df["industry_plate"] != "").sum())
+        if matched:
+            df = df[df["industry_plate"] != ""].reset_index(drop=True)
+            output_path = Path(output_dir) / "universe_with_industry.csv"
+            df.to_csv(output_path, index=False)
+            print(f"Using preloaded industry plates from {universe_path}.")
+            print(f"Matched {matched}/{total} tickers to industry plates.")
+            print(f"Saved to {output_path} ({len(df)} stocks with industry).")
+            return df
+
     ticker_to_industry = fetch_futu_industry_mapping(host, port, sleep_time)
 
     df["industry_plate"] = df["ticker"].map(ticker_to_industry)

@@ -1,10 +1,4 @@
-"""Step 5: Compute text similarity between paired companies using embeddings.
-
-For each pair in all_pairs.csv, compute cosine similarity across 4 dimensions,
-then apply weighted sum to get overlap_score. Filter by threshold.
-
-Outputs: outputs/text_similarity.csv
-"""
+"""Step 6: Compute text similarity for curve-filtered pairs and keep the top fraction."""
 from __future__ import annotations
 
 import argparse
@@ -17,9 +11,18 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from utils.data_io import write_csv
 
 DIMENSIONS = ["core_business", "main_product_service", "customer_channel", "geography"]
+SIMILARITY_COLUMNS = [
+    "ticker_a",
+    "ticker_b",
+    "industry_plate",
+    "overlap_score",
+    "core_business_similarity",
+    "main_product_service_similarity",
+    "customer_channel_similarity",
+    "geography_similarity",
+]
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -38,7 +41,7 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
     w_product = float(weights.get("main_product_service", 0.30))
     w_customer = float(weights.get("customer_channel", 0.25))
     w_geo = float(weights.get("geography", 0.15))
-    min_overlap = float(sim_cfg.get("min_overlap_score", 0.7))
+    keep_fraction = float(sim_cfg.get("keep_fraction", 0.20))
 
     dim_weights = {
         "core_business": w_core,
@@ -51,7 +54,7 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
     npz_path = Path(output_dir) / "embeddings_vectors.npz"
     metadata_path = Path(output_dir) / "embeddings_metadata.json"
     if not npz_path.exists() or not metadata_path.exists():
-        raise FileNotFoundError("Embeddings not found. Run step4 first.")
+        raise FileNotFoundError("Embeddings not found. Run step5 first.")
 
     data = np.load(npz_path)
     matrices = {dim: data[dim] for dim in DIMENSIONS}
@@ -60,9 +63,9 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
     ticker_to_idx = {c["ticker"]: c["index"] for c in companies}
 
     # Load pairs
-    pairs_path = Path(output_dir) / "all_pairs.csv"
+    pairs_path = Path(output_dir) / "return_correlation.csv"
     if not pairs_path.exists():
-        raise FileNotFoundError("Pairs file not found. Run step3 first.")
+        raise FileNotFoundError("Curve-filtered pairs not found. Run step4 first.")
     pairs_df = pd.read_csv(pairs_path)
 
     print(f"Computing text similarity for {len(pairs_df)} pairs...")
@@ -85,28 +88,37 @@ def run(config_path: str = "config.yaml", output_dir: str = "outputs"):
             dim_scores[dim] = sim
             overlap_score += sim * dim_weights[dim]
 
-        if overlap_score >= min_overlap:
-            results.append({
-                "ticker_a": ticker_a,
-                "ticker_b": ticker_b,
-                "industry_plate": row.get("industry_plate", ""),
-                "overlap_score": round(overlap_score, 4),
-                "core_business_similarity": round(dim_scores["core_business"], 4),
-                "main_product_service_similarity": round(dim_scores["main_product_service"], 4),
-                "customer_channel_similarity": round(dim_scores["customer_channel"], 4),
-                "geography_similarity": round(dim_scores["geography"], 4),
-            })
+        result = {
+            "ticker_a": ticker_a,
+            "ticker_b": ticker_b,
+            "industry_plate": row.get("industry_plate", ""),
+            "overlap_score": round(overlap_score, 4),
+            "core_business_similarity": round(dim_scores["core_business"], 4),
+            "main_product_service_similarity": round(dim_scores["main_product_service"], 4),
+            "customer_channel_similarity": round(dim_scores["customer_channel"], 4),
+            "geography_similarity": round(dim_scores["geography"], 4),
+        }
+        for column in pairs_df.columns:
+            if column not in result:
+                result[column] = row.get(column, "")
+        results.append(result)
 
     results.sort(key=lambda x: -x["overlap_score"])
+    keep_n = max(1, int(len(results) * keep_fraction)) if results else 0
+    kept_results = results[:keep_n]
     output_path = Path(output_dir) / "text_similarity.csv"
-    write_csv(output_path, results)
-    print(f"Text similarity filtering: {len(pairs_df)} -> {len(results)} pairs (threshold={min_overlap})")
+    ordered_columns = SIMILARITY_COLUMNS + [c for c in pairs_df.columns if c not in SIMILARITY_COLUMNS]
+    pd.DataFrame(kept_results, columns=ordered_columns).to_csv(output_path, index=False)
+    print(
+        f"Text similarity filtering: {len(pairs_df)} input -> {len(results)} scored -> "
+        f"{len(kept_results)} kept (keep_fraction={keep_fraction})"
+    )
     print(f"Saved to {output_path}")
-    return results
+    return kept_results
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Step 5: Text similarity computation")
+    parser = argparse.ArgumentParser(description="Step 6: Text similarity computation")
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--output-dir", default="outputs")
     args = parser.parse_args()

@@ -1,5 +1,6 @@
 universe:
   min_market_cap_usd: 5_000_000_000
+  local_grouped_industry_dir: "data/sec_companies_gt_5B_marketcap_by_industry_plate_grouped"
   sec_tickers_url: "https://www.sec.gov/files/company_tickers.json"
 
 industry:
@@ -12,8 +13,18 @@ embedding:
   api_url: "https://api.openai-proxy.org/v1/embeddings"
   model: "text-embedding-3-large"
   batch_size: 128
-  summary_model: "gpt-4o"
+  summary_model: "gpt-5.4"
   summary_api_url: "https://api.openai-proxy.org/v1/chat/completions"
+  summary_workers: 4
+  summary_max_retries: 4
+  summary_request_timeout: 300
+  double_tower_root: ""
+  reuse_text_artifact_roots: []
+  submissions_zip: "cache/submissions_v2.zip"
+  edgar_data_dir: "cache/edgar_data"
+  edgar_cache_dir: "cache/edgar_http_cache"
+  sec_user_agent: "Your Name your_email@example.com"
+  filing_year: 0
 
 text_similarity:
   weights:
@@ -21,26 +32,23 @@ text_similarity:
     main_product_service: 0.30
     customer_channel: 0.25
     geography: 0.15
-  min_overlap_score: 0.7
+  keep_fraction: 0.30
 
 return_correlation:
   neutralization_window: 120
-  correlation_windows: [252, 504, 1000]
-  min_correlation: 0.3
   price_history_days: 1200
+  window_candidates: [252, 504, 1000]
+  end_date: "2026-05-08"
+  keep_fraction: 0.50
 
 candidate_selection:
-  candidate_fraction: 0.50
   company_appearance_cap: 2
-  text_weight: 0.5
-  correlation_weight: 0.5
 
 llm_review:
   api_key_env: "CLOSEAI_API_KEY"
   api_url: "https://api.openai-proxy.org/v1/chat/completions"
-  model: "gpt-4o"
+  model: "gpt-5.4"
   workers: 10
-  dimension_workers: 4
   reasoning_effort: "high"
   max_retries: 3
   request_timeout: 300

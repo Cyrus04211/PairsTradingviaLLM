@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -63,6 +64,115 @@ def to_float(value: Any) -> float:
         return 0.0
 
 
+# ── Robust SEC filing section extraction (ported from stock_matching) ──
+
+MIN_CONTENT_CHARS = 200
+
+
+def _build_min_content_position(text: str) -> int:
+    """Return the earliest character offset where real content is expected,
+    to avoid matching table-of-contents entries."""
+    return min(max(5000, int(len(text) * 0.03)), 30000)
+
+
+def extract_text_section(
+    text: str,
+    start_patterns: list[str],
+    end_patterns: list[str],
+    *,
+    min_chars: int = MIN_CONTENT_CHARS,
+) -> str:
+    """Regex-based section extraction with multiple start/end pattern candidates.
+
+    Tries each *start_pattern* in order; for each match after the
+    minimum-content position, finds the earliest *end_pattern* match and
+    returns the clean text between them.  Returns empty string when no
+    candidate yields enough text.
+    """
+    if not text:
+        return ""
+    min_position = _build_min_content_position(text)
+    flags = re.IGNORECASE | re.MULTILINE
+
+    for start_pattern in start_patterns:
+        for match in re.finditer(start_pattern, text, flags):
+            if match.start() < min_position:
+                continue
+            start = match.start()
+            search_from = min(len(text), match.end() + 20)
+            end = len(text)
+            for end_pattern in end_patterns:
+                end_match = re.search(end_pattern, text[search_from:], flags)
+                if end_match is None:
+                    continue
+                end = min(end, search_from + end_match.start())
+            candidate = clean_text(text[start:end])
+            if len(candidate) >= min_chars:
+                return candidate
+    return ""
+
+
+def _fallback_ten_k_business(filing: Any) -> str:
+    text = filing.text()
+    return extract_text_section(
+        text,
+        start_patterns=[
+            r"^\s*Items?\s+1\s*(?:and|&)\s*2\b.*$",
+            r"^\s*Item\s+1\b.*Business.*$",
+            r"^\s*Item\s+1\b(?!.*A\b)",
+            r"Business and Properties",
+        ],
+        end_patterns=[
+            r"^\s*Item\s+1A\b",
+            r"^\s*Item\s+1B\b",
+            r"^\s*Item\s+2\b",
+            r"^\s*Item\s+3\b",
+        ],
+    )
+
+
+def _fallback_twenty_f_business(filing: Any) -> str:
+    text = filing.text()
+    return extract_text_section(
+        text,
+        start_patterns=[
+            r"^\s*Item\s+4\b.*$",
+            r"^\s*(?:II|I{1,3}|IV|V)\.\s+INFORMATION ON THE COMPANY\b",
+            r"^\s*INFORMATION ON THE COMPANY\b",
+        ],
+        end_patterns=[
+            r"^\s*Item\s+4A\b",
+            r"^\s*Item\s+5\b",
+            r"^\s*UNRESOLVED STAFF COMMENTS\b",
+            r"^\s*OPERATING AND FINANCIAL REVIEW AND PROSPECTS\b",
+        ],
+    )
+
+
+def _fallback_forty_f_business(report: Any) -> str:
+    text = getattr(report, "aif_text", "") or ""
+    return extract_text_section(
+        text,
+        start_patterns=[
+            r"^\s*GENERAL DEVELOPMENT OF THE BUSINESS\b",
+            r"^\s*DESCRIPTION OF THE BUSINESS\b",
+            r"^\s*BUSINESS OVERVIEW\b",
+            r"^\s*BUSINESS OPERATIONS\b",
+        ],
+        end_patterns=[
+            r"^\s*RISK FACTORS\b",
+            r"^\s*RISKS RELATED TO THE BUSINESS\b",
+            r"^\s*DIVIDENDS\b",
+            r"^\s*DESCRIPTION OF CAPITAL STRUCTURE\b",
+            r"^\s*MARKET FOR SECURITIES\b",
+            r"^\s*DIRECTORS AND (?:EXECUTIVE )?OFFICERS\b",
+            r"^\s*LEGAL (?:PROCEEDINGS|MATTERS)\b",
+            r"^\s*MATERIAL PROPERTIES\b",
+            r"^\s*CORPORATE STRUCTURE\b",
+        ],
+    )
+
+
 def normalize_dimensions(raw_dimensions: dict[str, Any] | None) -> dict[str, str]:
     if not isinstance(raw_dimensions, dict):
         return {}
@@ -91,6 +201,12 @@ def configure_edgar_identity(user_agent: str) -> None:
 
 
 def fetch_business_description(ticker: str, cik: str, user_agent: str) -> str:
+    """Robustly extract Item-1 / business-section text from the latest annual filing.
+
+    Strategy (mirrors ``stock_matching/extract_latest_annual_items.py``):
+      1. Try the structured edgartools ``filing.obj()`` path for the correct form.
+      2. If that yields nothing, apply regex-based fallback on the raw filing text.
+    """
     if not clean_text(cik):
         return ""
     try:
@@ -98,30 +214,62 @@ def fetch_business_description(ticker: str, cik: str, user_agent: str) -> str:
         from edgar import Company
 
         company = Company(clean_text(cik))
-        filings = company.get_filings(form="10-K")
-        if not filings or len(filings) == 0:
-            filings = company.get_filings(form="20-F")
-        if not filings or len(filings) == 0:
-            filings = company.get_filings(form="40-F")
-        if not filings or len(filings) == 0:
+
+        # Try base forms first, then amended forms
+        form_attempts = [
+            ("10-K", None),
+            ("20-F", None),
+            ("40-F", None),
+            ("10-K/A", None),
+            ("20-F/A", None),
+            ("40-F/A", None),
+        ]
+        latest_filing = None
+        used_form = ""
+        for form, _ in form_attempts:
+            filings = company.get_filings(form=form)
+            if filings and len(filings) > 0:
+                latest_filing = filings[0]
+                used_form = form
+                break
+
+        if latest_filing is None:
             return ""
 
-        latest = filings[0]
-        filing_obj = latest.obj()
-        for field_name in ("item1", "business"):
-            value = getattr(filing_obj, field_name, "")
-            text = clean_text(value)
-            if text:
-                return text[:15000]
-        if hasattr(filing_obj, "__getitem__"):
-            for key in ("Item 1", "Item 4"):
-                try:
-                    text = clean_text(filing_obj[key])
-                except Exception:  # noqa: BLE001
-                    text = ""
-                if text:
-                    return text[:15000]
-        return ""
+        form_base = used_form.replace("/A", "")
+
+        # ── Step 1: structured extraction via filing.obj() ──
+        try:
+            filing_obj = latest_filing.obj()
+        except Exception:  # noqa: BLE001
+            filing_obj = None
+
+        business_text = ""
+        if filing_obj is not None:
+            if form_base == "10-K":
+                business_text = clean_text(
+                    getattr(filing_obj, "business", "") or filing_obj["Item 1"]
+                )
+            elif form_base == "20-F":
+                business_text = clean_text(
+                    getattr(filing_obj, "business", "") or filing_obj["Item 4"]
+                )
+            elif form_base == "40-F":
+                business_text = clean_text(getattr(filing_obj, "business", ""))
+                if not business_text:
+                    business_text = _fallback_forty_f_business(filing_obj)
+
+        # ── Step 2: fallback via text regex ──
+        if not business_text:
+            if form_base == "10-K":
+                business_text = _fallback_ten_k_business(latest_filing)
+            elif form_base == "20-F":
+                business_text = _fallback_twenty_f_business(latest_filing)
+            elif form_base == "40-F":
+                business_text = _fallback_forty_f_business(filing_obj)
+
+        return business_text
+
     except Exception as exc:  # noqa: BLE001
         print(f"  [WARN] Failed to fetch annual business text for {ticker} (CIK={cik}): {exc}")
         return ""
@@ -130,7 +278,7 @@ def fetch_business_description(ticker: str, cik: str, user_agent: str) -> str:
 def refine_to_dimensions(client: APIClient, business_text: str, ticker: str) -> dict[str, str]:
     if not business_text.strip():
         return {}
-    user_prompt = f"Company ticker: {ticker}\n\nBusiness Description:\n{business_text[:10000]}"
+    user_prompt = f"Company ticker: {ticker}\n\nBusiness Description:\n{business_text}"
     try:
         result = client.chat_completion_json(
             messages=[
